@@ -4,27 +4,25 @@ import gzip
 import os
 import logging
 from datetime import date, timedelta
-
 import boto3
+import time
 
 s3 = boto3.resource('s3')
 s3_client = boto3.client('s3')
 
 #target file path parameter
-#def_prefix='tiles/47/P/NT/2020/5/24/0'
+def_prefix='tiles/47/P/NT/2020/5/24/0'
 def_local='.'
 def_bucket='sentinel-s2-l2a'
 
 today = date.today() - timedelta(days=2)
-logfile = "test-{}.log".format(today.strftime("%Y-%m-%d"))
+logfile = "daily-{}.log".format(today.strftime("%Y-%m-%d"))
 logging.basicConfig(filename=logfile, filemode='w', format='%(asctime)s %(name)s - %(levelname)s - %(message)s', level=logging.INFO, datefmt='%d-%m %H:%M:%S')
 logging.info('Logging start for {}'.format(today.strftime("%Y-%m-%d")))
 focus_file_date = today.strftime("%Y/%-m")
-#focus_file_date = '2020/6'
-print(focus_file_date)
-
+logging.info(focus_file_date)
 # aws parameter
-focus_tiles = [ 'tiles/47/P' , 'tiles/47/Q' , 'tiles/47/N', 'tiles/48/P', 'tiles/48/Q', 'tiles/48/N']
+focus_tiles = [ 'tiles/47/P' , 'tiles/47/Q' , 'tiles/47/N', 'tiles/48/P', 'tiles/48/Q', 'tiles/48/N' , 'tiles/36/D']
 bucket = 'sentinel-inventory'
 manifest_key = 'sentinel-s2-l2a/sentinel-s2-l2a-inventory/{}T00-00Z/manifest.json'.format(today.strftime("%Y-%m-%d"))
 logging.info(manifest_key)
@@ -36,6 +34,9 @@ logging.info(manifest_key)
 console = logging.StreamHandler()  
 console.setLevel(logging.INFO)  
 logging.getLogger("").addHandler(console)
+
+start = time.time()
+
 
 
 def list_keys(bucket, manifest_key):
@@ -125,13 +126,11 @@ if __name__ == '__main__':
     for bucket, key, filesize, *rest in list_keys(bucket, manifest_key):
         if 'tiles' in key:
             #if def_filter in key:
-            #logging.info(key)
             if any(s in key for s in focus_tiles):
                 number += 1
                 downloads_bytes += int(filesize)
-                #logging.info(key)
+                logging.info(key)
                 if focus_file_date in key:
-                    #print('found date')
                     #logging.info(key)
                     focus_file_count += 1 
                     focus_downloads_bytes += int(filesize)
@@ -139,9 +138,14 @@ if __name__ == '__main__':
             #print(number, bucket, key,*rest ,end='\r')
             total_file_scan += 1
             counting += 1
-            if (counting % 1000000) == 0:
+            if counting >= 1000000:
                 total_bytes=format_bytes(downloads_bytes)
                 total_today_bytes=format_bytes(focus_downloads_bytes)
-                logging.info("{} {:,} files to download , {:,} scanned, today files : {} , {:,} files".format(total_bytes,number,total_file_scan,total_today_bytes,focus_file_count))
-          #  if counting >= 10000000:
-           #     quit()
+                #logging.info(total_bytes, number, 'files' ,total_file_scan)
+                logging.info("{} {:,} files to download , {:,} scanned, today files : {} {:,}".format(total_bytes,number,total_file_scan,total_today_bytes,focus_file_count))
+                counting = 0
+            
+    end = time.time()
+    hours, rem = divmod(end-start, 3600)
+    minutes, seconds = divmod(rem, 60)
+    print("excute time {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
