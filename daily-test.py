@@ -129,9 +129,9 @@ if __name__ == '__main__':
             if any(s in key for s in focus_tiles):
                 number += 1
                 downloads_bytes += int(filesize)
-                logging.info(key)
+                #logging.info(key)
                 if focus_file_date in key:
-                    #logging.info(key)
+                    logging.info(key)
                     focus_file_count += 1 
                     focus_downloads_bytes += int(filesize)
 
