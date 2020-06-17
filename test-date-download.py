@@ -16,13 +16,15 @@ def_local='.'
 def_bucket='sentinel-s2-l2a'
 
 today = date.today() - timedelta(days=2)
-logfile = "{}.log".format(today.strftime("%Y-%m-%d"))
+logfile = "test-{}.log".format(today.strftime("%Y-%m-%d"))
 logging.basicConfig(filename=logfile, filemode='w', format='%(asctime)s %(name)s - %(levelname)s - %(message)s', level=logging.INFO, datefmt='%d-%m %H:%M:%S')
 logging.info('Logging start for {}'.format(today.strftime("%Y-%m-%d")))
-focus_file_date = today.strftime("%Y/%-m/%-d")
+focus_file_date2 = today.strftime("%Y/%-m/%-d")
+focus_file_date = '2018/2/20'
+print(focus_file_date2)
 
 # aws parameter
-focus_tiles = [ 'tiles/47/P' , 'tiles/47/Q' , 'tiles/47/N', 'tiles/48/P', 'tiles/48/Q', 'tiles/48/N' , 'tiles/36/D']
+focus_tiles = [ 'tiles/47/P' , 'tiles/47/Q' , 'tiles/47/N', 'tiles/48/P', 'tiles/48/Q', 'tiles/48/N' , 'tiles/33/M']
 bucket = 'sentinel-inventory'
 manifest_key = 'sentinel-s2-l2a/sentinel-s2-l2a-inventory/{}T00-00Z/manifest.json'.format(today.strftime("%Y-%m-%d"))
 logging.info(manifest_key)
@@ -123,11 +125,13 @@ if __name__ == '__main__':
     for bucket, key, filesize, *rest in list_keys(bucket, manifest_key):
         if 'tiles' in key:
             #if def_filter in key:
+            logging.info(key)
             if any(s in key for s in focus_tiles):
                 number += 1
                 downloads_bytes += int(filesize)
                 #logging.info(key)
                 if focus_file_date in key:
+                    print('found date')
                     logging.info(key)
                     focus_file_count += 1 
                     focus_downloads_bytes += int(filesize)
@@ -135,9 +139,5 @@ if __name__ == '__main__':
             #print(number, bucket, key,*rest ,end='\r')
             total_file_scan += 1
             counting += 1
-            if counting >= 1000000:
-                total_bytes=format_bytes(downloads_bytes)
-                total_today_bytes=format_bytes(focus_downloads_bytes)
-                #logging.info(total_bytes, number, 'files' ,total_file_scan)
-                logging.info("{} {:,} files to download , {:,} scanned, today files : {} {:,}".format(total_bytes,number,total_file_scan,total_today_bytes,focus_file_count))
-                counting = 0
+            if counting >= 100:
+                quit()
