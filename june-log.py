@@ -16,19 +16,14 @@ s3_client = boto3.client('s3')
 def_local='.'
 def_bucket='sentinel-s2-l2a'
 
-#today = date.today() - timedelta(days=2)
-today = datetime.datetime(2020, 6, 14, 00, 00)
-logfile = "daily-{}.log".format(today.strftime("%Y-%m-%d"))
-logging.basicConfig(filename=logfile, filemode='w', format='%(asctime)s %(name)s - %(levelname)s - %(message)s', level=logging.INFO, datefmt='%d-%m %H:%M:%S')
-logging.info('Logging start for {}'.format(today.strftime("%Y-%m-%d")))
-focus_file_date = today.strftime("%Y/%-m/%-d")
-#focus_file_date = today.strftime("2020/6/14")
-logging.info(focus_file_date)
-# aws parameter
-focus_tiles = [ 'tiles/47/P' , 'tiles/47/Q' , 'tiles/47/N', 'tiles/48/P', 'tiles/48/Q', 'tiles/48/N' , 'tiles/36/D']
-bucket = 'sentinel-inventory'
-manifest_key = 'sentinel-s2-l2a/sentinel-s2-l2a-inventory/{}T00-00Z/manifest.json'.format(today.strftime("%Y-%m-%d"))
-logging.info(manifest_key)
+#create log location 
+log_location='./log/'
+if not os.path.exists(os.path.dirname(log_location)):
+    logging.info('Create path {}'.format(log_location))
+    os.makedirs(os.path.dirname(log_location))
+logging.basicConfig(format='%(asctime)s %(name)s - %(levelname)s - %(message)s', level=logging.INFO, datefmt='%d-%m %H:%M:%S')
+
+
 
 
 
@@ -38,6 +33,7 @@ console = logging.StreamHandler()
 console.setLevel(logging.INFO)  
 logging.getLogger("").addHandler(console)
 
+# track runtime start
 start = time.time()
 
 
@@ -117,8 +113,33 @@ def format_bytes(size):
     return to_return
 
 
+def daily_run(today):
 
-if __name__ == '__main__':
+
+
+
+    #today = date.today() - timedelta(days=2)
+    #today = datetime.datetime(2020, 6, 14, 00, 00)
+    logfile = "daily-{}.log".format(today.strftime("%Y-%m-%d"))
+    fileh = logging.FileHandler('{}{}'.format(log_location,logfile), 'w')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fileh.setFormatter(formatter)
+    print(logfile)
+    log = logging.getLogger()  # root logger
+    for hdlr in log.handlers[:]:  # remove all old handlers
+        log.removeHandler(hdlr)
+    log.addHandler(fileh)      # set the new handler
+    #logging.basicConfig(filename=logfile, filemode='w', format='%(asctime)s %(name)s - %(levelname)s - %(message)s', level=logging.INFO, datefmt='%d-%m %H:%M:%S')
+    logging.info('Logging start for {}'.format(today.strftime("%Y-%m-%d")))
+    focus_file_date = today.strftime("%Y/%-m/%-d")
+    logging.info(focus_file_date)
+    # aws parameter
+    focus_tiles = [ 'tiles/47/P' , 'tiles/47/Q' , 'tiles/47/N', 'tiles/48/P', 'tiles/48/Q', 'tiles/48/N' , 'tiles/36/D']
+    bucket = 'sentinel-inventory'
+    manifest_key = 'sentinel-s2-l2a/sentinel-s2-l2a-inventory/{}T00-00Z/manifest.json'.format(today.strftime("%Y-%m-%d"))
+    logging.info(manifest_key)
+
+
 
     number = 0
     counting = 0
@@ -126,6 +147,7 @@ if __name__ == '__main__':
     total_file_scan = 0
     focus_file_count = 0
     focus_downloads_bytes = 0
+    total_counting=0
     for bucket, key, filesize, *rest in list_keys(bucket, manifest_key):
         if 'tiles' in key:
             #if def_filter in key:
@@ -147,8 +169,24 @@ if __name__ == '__main__':
                 #logging.info(total_bytes, number, 'files' ,total_file_scan)
                 logging.info("{} {:,} files to download , {:,} scanned, today files : {} {:,}".format(total_bytes,number,total_file_scan,total_today_bytes,focus_file_count))
                 counting = 0
+            total_counting += 1
+        # for test log per day only , uncomment if u guys just can't wait
+        #if total_counting >= 3000000:
+        #   break
             
     end = time.time()
     hours, rem = divmod(end-start, 3600)
     minutes, seconds = divmod(rem, 60)
-    logging.info("excute time {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
+    logging.info("total execution time {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
+    logging.info("files to download for date {}: {}".format(today.strftime("%Y-%m-%d"),focus_file_count)) 
+    logging.info("Total size : {}".format(format_bytes(focus_downloads_bytes))) 
+
+if __name__ == '__main__':
+    date_start = datetime.datetime(2020, 6, 1, 00, 00)
+    for i in range(15):
+        #daily_run(date_start + timedelta(days=i))
+        today = date_start + timedelta(days=i)
+        daily_run(today)
+        print("daily-{}.log".format(today.strftime("%Y-%m-%d")))
+        
+        
