@@ -19,7 +19,8 @@ today = date.today() - timedelta(days=2)
 logfile = "daily-{}.log".format(today.strftime("%Y-%m-%d"))
 logging.basicConfig(filename=logfile, filemode='w', format='%(asctime)s %(name)s - %(levelname)s - %(message)s', level=logging.INFO, datefmt='%d-%m %H:%M:%S')
 logging.info('Logging start for {}'.format(today.strftime("%Y-%m-%d")))
-focus_file_date = today.strftime("%Y/%-m")
+#focus_file_date = today.strftime("%Y/%-m")
+focus_file_date = today.strftime("2020/6/14")
 logging.info(focus_file_date)
 # aws parameter
 focus_tiles = [ 'tiles/47/P' , 'tiles/47/Q' , 'tiles/47/N', 'tiles/48/P', 'tiles/48/Q', 'tiles/48/N' , 'tiles/36/D']
@@ -148,4 +149,4 @@ if __name__ == '__main__':
     end = time.time()
     hours, rem = divmod(end-start, 3600)
     minutes, seconds = divmod(rem, 60)
-    print("excute time {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
+    logging.info("excute time {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
