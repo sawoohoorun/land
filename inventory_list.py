@@ -11,7 +11,7 @@ s3 = boto3.resource('s3')
 s3_client = boto3.client('s3')
 
 #target file path parameter
-def_prefix='tiles/47/P/NT/2020/5/24/0'
+
 def_local='.'
 def_bucket='sentinel-s2-l2a'
 
@@ -19,10 +19,12 @@ today = date.today() - timedelta(days=2)
 logfile = "{}.log".format(today.strftime("%Y-%m-%d"))
 logging.basicConfig(filename=logfile, filemode='w', format='%(asctime)s %(name)s - %(levelname)s - %(message)s', level=logging.INFO, datefmt='%d-%m %H:%M:%S')
 logging.info('Logging start for {}'.format(today.strftime("%Y-%m-%d")))
-focus_file_date = today.strftime("%Y/%-m/%-d")
-
+#focus_file_date = today.strftime("%Y/%-m/%-d")
+focus_file_date = '2020/7/5'
+logging.info(focus_file_date)
 # aws parameter
-focus_tiles = [ 'tiles/47/P' , 'tiles/47/Q' , 'tiles/47/N', 'tiles/48/P', 'tiles/48/Q', 'tiles/48/N' , 'tiles/36/D']
+#focus_tiles = [ 'tiles/47/P' , 'tiles/47/Q' , 'tiles/47/N', 'tiles/48/P', 'tiles/48/Q', 'tiles/48/N' , 'tiles/36/D', 'tiles/16/W']
+focus_tiles = ['tiles/16/W']
 bucket = 'sentinel-inventory'
 manifest_key = 'sentinel-s2-l2a/sentinel-s2-l2a-inventory/{}T00-00Z/manifest.json'.format(today.strftime("%Y-%m-%d"))
 logging.info(manifest_key)
@@ -83,8 +85,9 @@ def download_dir(prefix, local, bucket, client=s3_client):
         dest_pathname = os.path.join(local, k)
         if not os.path.exists(os.path.dirname(dest_pathname)):
             os.makedirs(os.path.dirname(dest_pathname))
-        print(bucket, k , dest_pathname)
-        #client.download_file(bucket, k, dest_pathname, ExtraArgs={'RequestPayer': 'requester'})
+        #print(bucket, k , dest_pathname)
+        logging.info("downloading {} {}".format(key, dest_pathname))
+        client.download_file(bucket, k, dest_pathname, ExtraArgs={'RequestPayer': 'requester'})
 
 def download_file(bucket, key, local, client=s3_client):
         prefix = os.path.split(os.path.abspath(key))
@@ -92,9 +95,9 @@ def download_file(bucket, key, local, client=s3_client):
         file_name = prefix[1]
         #fullpath='./{}{}'.format(dest_pathname,file_name)
         #fullpath=dest_pathname+file_name
-        print(dest_pathname,file_name)
+        #print(dest_pathname,file_name)
         if not os.path.exists(os.path.dirname(dest_pathname)):
-            print("creating file path")
+            #print("creating file path")
             os.makedirs(os.path.dirname(dest_pathname))
         #client.download_file(bucket, key, dest_pathname+file_name, ExtraArgs={'RequestPayer': 'requester'})
 
@@ -123,6 +126,7 @@ if __name__ == '__main__':
     for bucket, key, filesize, *rest in list_keys(bucket, manifest_key):
         if 'tiles' in key:
             #if def_filter in key:
+#            logging.info(key)
             if any(s in key for s in focus_tiles):
                 number += 1
                 downloads_bytes += int(filesize)
@@ -131,6 +135,8 @@ if __name__ == '__main__':
                     logging.info(key)
                     focus_file_count += 1 
                     focus_downloads_bytes += int(filesize)
+                    download_dir(key, def_local, def_bucket)
+
 
             #print(number, bucket, key,*rest ,end='\r')
             total_file_scan += 1

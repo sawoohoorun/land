@@ -34,7 +34,7 @@ console.setLevel(logging.INFO)
 logging.getLogger("").addHandler(console)
 
 # track runtime start
-start = time.time()
+
 
 
 
@@ -115,7 +115,7 @@ def format_bytes(size):
 
 def daily_run(today):
 
-
+    start = time.time()
 
 
     #today = date.today() - timedelta(days=2)
